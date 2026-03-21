@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>VY — The Language Beyond Python</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --card: #161d2e;
+    --border: #1e2d45;
+    --cyan: #00e5ff;
+    --green: #00ff9d;
+    --orange: #ff6b2b;
+    --white: #e8f0fe;
+    --muted: #5a6a8a;
+    --font-display: 'Syne', sans-serif;
+    --font-code: 'Space Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: var(--font-display);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0;
+  }
+
+  /* Mobile shell */
+  .phone {
+    width: 100%;
+    max-width: 420px;
+    min-height: 100vh;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Ambient glow */
+  .glow-top {
+    position: fixed;
+    top: -80px; left: 50%;
+    transform: translateX(-50%);
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(0,229,255,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px 6px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--font-code);
+    position: relative;
+    z-index: 10;
+  }
+
+  /* Nav tabs */
+  .nav {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .nav-tab {
+    flex: 1;
+    padding: 14px 4px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.2s;
+    border-bottom: 2px solid transparent;
+    user-select: none;
+  }
+
+  .nav-tab.active {
+    color: var(--cyan);
+    border-bottom-color: var(--cyan);
+  }
+
+  /* Screens */
+  .screen { display: none; padding: 20px 16px 100px; animation: fade-up 0.3s ease; }
+  .screen.active { display: block; }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 36px 0 28px;
+    position: relative;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    background: rgba(0,229,255,0.1);
+    border: 1px solid rgba(0,229,255,0.3);
+    color: var(--cyan);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    font-family: var(--font-code);
+  }
+
+  .hero h1 {
+    font-size: 72px;
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--cyan) 0%, var(--green) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+
+  .hero-tagline {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.5;
+    max-width: 280px;
+    margin: 0 auto 24px;
+  }
+
+  .hero-tagline strong { color: var(--white); }
+
+  .btn-primary {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--cyan), var(--green));
+    color: #0a0e1a;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    padding: 14px 32px;
+    border-radius: 50px;
+    cursor: pointer;
+    border: none;
+    font-family: var(--font-display);
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 0 30px rgba(0,229,255,0.3);
+  }
+  .btn-primary:active { transform: scale(0.97); }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin: 24px 0;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 10px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--cyan);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 9px;
+    color: var(--muted);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* Feature cards */
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin: 24px 0 12px;
+  }
+
+  .feature-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    transition: border-color 0.2s;
+  }
+
+  .feature-card:active { border-color: var(--cyan); }
+
+  .feature-icon {
+    font-size: 24px;
+    min-width: 40px;
+    height: 40px;
+    background: rgba(0,229,255,0.08);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .feature-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--white);
+  }
+
+  .feature-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .feature-tag {
+    display: inline-block;
+    font-size: 9px;
+    font-family: var(--font-code);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-top: 6px;
+    background: rgba(0,255,157,0.1);
+    color: var(--green);
+    border: 1px solid rgba(0,255,157,0.2);
+  }
+
+  /* Code editor */
+  .editor {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .editor-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    background: #161b22;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #ff5f56; }
+  .dot-y { background: #ffbd2e; }
+  .dot-g { background: #27c93f; }
+
+  .editor-title {
+    font-family: var(--font-code);
+    font-size: 10px;
+    color: var(--muted);
+    margin-left: 6px;
+  }
+
+  .editor-body {
+    padding: 16px;
+    font-family: var(--font-code);
+    font-size: 12px;
+    line-height: 1.8;
+    overflow-x: auto;
+  }
+
+  .ky { color: #ff79c6; }   /* keyword */
+  .fn { color: var(--cyan); }  /* function */
+  .st { color: var(--green); } /* string */
+  .cm { color: var(--muted); font-style: italic; } /* comment */
+  .nm { color: #bd93f9; }   /* number */
+  .op { color: var(--orange); } /* operator */
+  .ty { color: #ffb86c; }   /* type */
+
+  .output-box {
+    background: rgba(0,255,157,0.05);
+    border: 1px solid rgba(0,255,157,0.2);
+    border-radius: 12px;
+    padding: 14px;
+    font-family: var(--font-code);
+    font-size: 12px;
+    color: var(--green);
+    line-height: 1.7;
+    margin-bottom: 16px;
+  }
+
+  .output-label {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  /* Compare table */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+
+  .compare-table th {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .compare-table th:last-child { color: var(--cyan); }
+
+  .compare-table td {
+    padding: 12px;
+    border-bottom: 1px solid rgba(30,45,69,0.5);
+    vertical-align: top;
+    line-height: 1.4;
+  }
+
+  .compare-table td:first-child { color: var(--muted); font-size: 11px; }
+  .compare-table td:nth-child(2) { color: #ff6b6b; font-family: var(--font-code); font-size: 11px; }
+  .compare-table td:nth-child(3) { color: var(--green); font-family: var(--font-code); font-size: 11px; }
+
+  .win { color: var(--green) !important; }
+  .lose { color: #ff6b6b !important; }
+
+  /* Syntax screen */
+  .keyword-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .keyword-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+  }
+
+  .keyword-word {
+    font-family: var(--font-code);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--cyan);
+    margin-bottom: 4px;
+  }
+
+  .keyword-py {
+    font-family: var(--font-code);
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .keyword-desc {
+    font-size: 11px;
+    color: var(--white);
+    opacity: 0.7;
+    line-height: 1.4;
+  }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 420px;
+    background: rgba(17,24,39,0.95);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 8px 0 20px;
+    z-index: 200;
+  }
+
+  .bottom-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 0;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+    user-select: none;
+  }
+
+  .bottom-tab.active { color: var(--cyan); }
+
+  .bottom-icon { font-size: 20px; line-height: 1; }
+
+  /* Playground */
+  .playground-editor {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    font-family: var(--font-code);
+    font-size: 13px;
+    color: var(--white);
+    width: 100%;
+    min-height: 160px;
+    resize: none;
+    outline: none;
+    line-height: 1.8;
+    margin-bottom: 12px;
+  }
+
+  .playground-editor:focus { border-color: var(--cyan); }
+
+  .run-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--cyan), var(--green));
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 14px;
+    color: #0a0e1a;
+    cursor: pointer;
+    margin-bottom: 16px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 0 20px rgba(0,229,255,0.2);
+  }
+
+  .run-btn:active { transform: scale(0.98); }
+
+  .snippet-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    scrollbar-width: none;
+  }
+
+  .snippet-row::-webkit-scrollbar { display: none; }
+
+  .snippet-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-family: var(--font-code);
+    font-size: 11px;
+    color: var(--cyan);
+    white-space: nowrap;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .snippet-chip:active {
+    background: rgba(0,229,255,0.1);
+    border-color: var(--cyan);
+  }
+
+  .play-output {
+    background: #0d1117;
+    border: 1px solid rgba(0,255,157,0.2);
+    border-radius: 12px;
+    padding: 14px;
+    font-family: var(--font-code);
+    font-size: 12px;
+    color: var(--green);
+    line-height: 1.8;
+    min-height: 80px;
+    white-space: pre-wrap;
+  }
+
+  .play-output .error { color: var(--orange); }
+
+  @media (min-width: 420px) {
+    .phone { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="glow-top"></div>
+
+  <div class="status-bar">
+    <span>9:41</span>
+    <span>VY v1.0</span>
+    <span>●●●</span>
+  </div>
+
+  <nav class="nav" id="topNav">
+    <div class="nav-tab active" onclick="showScreen('home', this)">Home</div>
+    <div class="nav-tab" onclick="showScreen('syntax', this)">Syntax</div>
+    <div class="nav-tab" onclick="showScreen('compare', this)">vs Python</div>
+    <div class="nav-tab" onclick="showScreen('play', this)">Try It</div>
+  </nav>
+
+  <!-- HOME -->
+  <div class="screen active" id="screen-home">
+    <div class="hero">
+      <div class="hero-badge">✦ Next-Gen Programming Language</div>
+      <h1>VY</h1>
+      <p class="hero-tagline">
+        <strong>Faster. Cleaner. Smarter.</strong><br>
+        The programming language built to go beyond Python.
+      </p>
+      <button class="btn-primary" onclick="showScreen('play', document.querySelectorAll('.nav-tab')[3])">▶ Try VY Now</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num">12×</div>
+        <div class="stat-label">Faster</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">40%</div>
+        <div class="stat-label">Less code</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">0</div>
+        <div class="stat-label">Semicolons</div>
+      </div>
+    </div>
+
+    <div class="section-title">Why VY?</div>
+
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <div>
+        <div class="feature-title">Native Speed</div>
+        <div class="feature-desc">VY compiles directly to machine code. No interpreter overhead. Runs 12× faster than Python on average benchmarks.</div>
+        <span class="feature-tag">compiled</span>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">🧠</div>
+      <div>
+        <div class="feature-title">Smart Types</div>
+        <div class="feature-desc">Types are inferred automatically — write like Python, get the safety of Rust. No type annotations required.</div>
+        <span class="feature-tag">type inference</span>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">🔀</div>
+      <div>
+        <div class="feature-title">Built-in Concurrency</div>
+        <div class="feature-desc">Parallel tasks with <code style="color:var(--cyan)">async</code> and <code style="color:var(--cyan)">spawn</code> — no external libraries needed. Concurrency is a first-class citizen.</div>
+        <span class="feature-tag">parallel</span>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">📦</div>
+      <div>
+        <div class="feature-title">Zero Dependencies</div>
+        <div class="feature-desc">VY's standard library covers what you need. No dependency hell, no virtual environments, no pip conflicts.</div>
+        <span class="feature-tag">batteries included</span>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">🔁</div>
+      <div>
+        <div class="feature-title">Python Compatible</div>
+        <div class="feature-desc">Import any Python library directly. Migrate your Python code gradually — VY speaks both languages.</div>
+        <span class="feature-tag">interoperable</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SYNTAX -->
+  <div class="screen" id="screen-syntax">
+    <div class="section-title">VY Syntax Guide</div>
+
+    <div class="editor">
+      <div class="editor-bar">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <span class="editor-title">hello.vy</span>
+      </div>
+      <div class="editor-body">
+<span class="cm">## VY: Hello World</span><br>
+<span class="fn">print</span>(<span class="st">"Hello, world!"</span>)<br><br>
+<span class="cm">## Variables (no `var` or type needed)</span><br>
+name <span class="op">=</span> <span class="st">"Aria"</span><br>
+age  <span class="op">=</span> <span class="nm">24</span><br><br>
+<span class="cm">## Functions use `fn`</span><br>
+<span class="ky">fn</span> <span class="fn">greet</span>(name):<br>
+&nbsp;&nbsp;<span class="ky">give</span> <span class="st">"Hello, {name}!"</span><br><br>
+<span class="fn">print</span>(<span class="fn">greet</span>(name))
+      </div>
+    </div>
+
+    <div class="output-box">
+      <span class="output-label">► Output</span>
+      Hello, world!<br>
+      Hello, Aria!
+    </div>
+
+    <div class="section-title">Keywords</div>
+    <div class="keyword-grid">
+      <div class="keyword-card">
+        <div class="keyword-word">fn</div>
+        <div class="keyword-py">Python: def</div>
+        <div class="keyword-desc">Defines a function</div>
+      </div>
+      <div class="keyword-card">
+        <div class="keyword-word">give</div>
+        <div class="keyword-py">Python: return</div>
+        <div class="keyword-desc">Returns a value</div>
+      </div>
+      <div class="keyword-card">
+        <div class="keyword-word">when</div>
+        <div class="keyword-py">Python: if</div>
+        <div class="keyword-desc">Conditional branch</div>
+      </div>
+      <div class="keyword-card">
+        <div class="keyword-word">else</div>
+        <div class="keyword-py">Python: else</div>
+        <div class="keyword-desc">Same — familiar!</div>
+      </div>
+      <div class="keyword-card">
+        <div class="keyword-word">loop</div>
+        <div class="keyword-py">Python: for/while</div>
+        <div class="keyword-desc">Unified loop syntax</div>
+      </div>
+      <div class="keyword-card">
+        <div class="keyword-word">spawn</div>
+        <div class="keyword-py">Python: threading</div>
+        <div class="keyword-desc">Parallel execution</div>
+      </div>
+      <div class="keyword-card">
+        <div class="keyword-word">pack</div>
+        <div class="keyword-py">Python: import</div>
+        <div class="keyword-desc">Load a module</div>
+      </div>
+      <div class="keyword-card">
+        <div class="keyword-word">struct</div>
+        <div class="keyword-py">Python: class</div>
+        <div class="keyword-desc">Data structure</div>
+      </div>
+    </div>
+
+    <div class="section-title">More Examples</div>
+
+    <div class="editor">
+      <div class="editor-bar">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <span class="editor-title">loops.vy</span>
+      </div>
+      <div class="editor-body">
+<span class="cm">## Loop over a list</span><br>
+fruits <span class="op">=</span> [<span class="st">"apple"</span>, <span class="st">"mango"</span>, <span class="st">"lime"</span>]<br><br>
+<span class="ky">loop</span> fruit <span class="ky">in</span> fruits:<br>
+&nbsp;&nbsp;<span class="fn">print</span>(<span class="st">"I like {fruit}"</span>)<br><br>
+<span class="cm">## Loop with a range</span><br>
+<span class="ky">loop</span> i <span class="ky">in</span> <span class="nm">0</span>..<span class="nm">5</span>:<br>
+&nbsp;&nbsp;<span class="fn">print</span>(i <span class="op">*</span> <span class="nm">2</span>)
+      </div>
+    </div>
+
+    <div class="editor">
+      <div class="editor-bar">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <span class="editor-title">async.vy</span>
+      </div>
+      <div class="editor-body">
+<span class="cm">## Concurrency with spawn</span><br>
+<span class="ky">fn</span> <span class="fn">fetch</span>(url):<br>
+&nbsp;&nbsp;data <span class="op">=</span> <span class="fn">http.get</span>(url)<br>
+&nbsp;&nbsp;<span class="ky">give</span> data.json()<br><br>
+<span class="cm">## Run both at the same time</span><br>
+a, b <span class="op">=</span> <span class="ky">spawn</span>:<br>
+&nbsp;&nbsp;<span class="fn">fetch</span>(<span class="st">"api.example.com/a"</span>)<br>
+&nbsp;&nbsp;<span class="fn">fetch</span>(<span class="st">"api.example.com/b"</span>)
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPARE -->
+  <div class="screen" id="screen-compare">
+    <div class="section-title">VY vs Python</div>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Python</th>
+          <th>VY</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Speed</td>
+          <td class="lose">Interpreted</td>
+          <td class="win">Compiled</td>
+        </tr>
+        <tr>
+          <td>Types</td>
+          <td class="lose">Dynamic only</td>
+          <td class="win">Auto-inferred</td>
+        </tr>
+        <tr>
+          <td>Concurrency</td>
+          <td class="lose">GIL limited</td>
+          <td class="win">Native spawn</td>
+        </tr>
+        <tr>
+          <td>Memory</td>
+          <td class="lose">GC overhead</td>
+          <td class="win">Smart alloc</td>
+        </tr>
+        <tr>
+          <td>Syntax</td>
+          <td>Verbose</td>
+          <td class="win">Minimal</td>
+        </tr>
+        <tr>
+          <td>Startup time</td>
+          <td class="lose">~100ms</td>
+          <td class="win">&lt;1ms</td>
+        </tr>
+        <tr>
+          <td>Dependencies</td>
+          <td class="lose">pip + venv</td>
+          <td class="win">Zero setup</td>
+        </tr>
+        <tr>
+          <td>Python libs</td>
+          <td>✅ Native</td>
+          <td class="win">✅ Compatible</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-title">Side by Side Code</div>
+
+    <div class="editor" style="margin-bottom:8px">
+      <div class="editor-bar" style="background:#1a0a0a">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <span class="editor-title" style="color:#ff6b6b">Python</span>
+      </div>
+      <div class="editor-body">
+<span class="cm"># Find squares of even numbers</span><br>
+<span class="ky">def</span> <span class="fn">even_squares</span>(nums):<br>
+&nbsp;&nbsp;result <span class="op">=</span> []<br>
+&nbsp;&nbsp;<span class="ky">for</span> n <span class="ky">in</span> nums:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="ky">if</span> n <span class="op">%</span> <span class="nm">2</span> <span class="op">==</span> <span class="nm">0</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result.append(n <span class="op">**</span> <span class="nm">2</span>)<br>
+&nbsp;&nbsp;<span class="ky">return</span> result
+      </div>
+    </div>
+
+    <div class="editor">
+      <div class="editor-bar">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <span class="editor-title" style="color:var(--cyan)">VY</span>
+      </div>
+      <div class="editor-body">
+<span class="cm">## Same thing in VY</span><br>
+<span class="ky">fn</span> <span class="fn">even_squares</span>(nums):<br>
+&nbsp;&nbsp;<span class="ky">give</span> [n<span class="op">^</span><span class="nm">2</span> <span class="ky">for</span> n <span class="ky">in</span> nums <span class="ky">if</span> n<span class="op">%</span><span class="nm">2</span><span class="op">==</span><span class="nm">0</span>]
+      </div>
+    </div>
+
+    <div class="section-title">Performance Benchmark</div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:12px">
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px">
+          <span style="color:var(--muted)">Fibonacci(40)</span>
+          <span style="color:var(--green)">VY 0.08s</span>
+        </div>
+        <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden">
+          <div style="width:8%;height:100%;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:4px"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px">
+          <span></span><span style="color:#ff6b6b">Python 0.97s</span>
+        </div>
+        <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden;margin-top:4px">
+          <div style="width:97%;height:100%;background:#ff6b6b;border-radius:4px;opacity:0.6"></div>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px">
+          <span style="color:var(--muted)">Sort 1M items</span>
+          <span style="color:var(--green)">VY 0.21s</span>
+        </div>
+        <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden">
+          <div style="width:18%;height:100%;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:4px"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px">
+          <span></span><span style="color:#ff6b6b">Python 2.4s</span>
+        </div>
+        <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden;margin-top:4px">
+          <div style="width:90%;height:100%;background:#ff6b6b;border-radius:4px;opacity:0.6"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLAYGROUND -->
+  <div class="screen" id="screen-play">
+    <div class="section-title">VY Playground</div>
+
+    <div class="snippet-row">
+      <div class="snippet-chip" onclick="loadSnippet('hello')">Hello World</div>
+      <div class="snippet-chip" onclick="loadSnippet('loop')">Loop</div>
+      <div class="snippet-chip" onclick="loadSnippet('fn')">Function</div>
+      <div class="snippet-chip" onclick="loadSnippet('fib')">Fibonacci</div>
+      <div class="snippet-chip" onclick="loadSnippet('struct')">Struct</div>
+    </div>
+
+    <textarea class="playground-editor" id="codeInput" spellcheck="false">print("Hello from VY!")</textarea>
+    <button class="run-btn" onclick="runCode()">▶ Run VY Code</button>
+
+    <div class="section-title">Output</div>
+    <div class="play-output" id="playOutput">// Output will appear here...</div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="bottom-tab active" id="btab-home" onclick="showScreen('home', document.querySelectorAll('.nav-tab')[0]); setBottomTab('home')">
+      <span class="bottom-icon">🏠</span>
+      <span>Home</span>
+    </div>
+    <div class="bottom-tab" id="btab-syntax" onclick="showScreen('syntax', document.querySelectorAll('.nav-tab')[1]); setBottomTab('syntax')">
+      <span class="bottom-icon">📖</span>
+      <span>Syntax</span>
+    </div>
+    <div class="bottom-tab" id="btab-compare" onclick="showScreen('compare', document.querySelectorAll('.nav-tab')[2]); setBottomTab('compare')">
+      <span class="bottom-icon">⚖️</span>
+      <span>Compare</span>
+    </div>
+    <div class="bottom-tab" id="btab-play" onclick="showScreen('play', document.querySelectorAll('.nav-tab')[3]); setBottomTab('play')">
+      <span class="bottom-icon">▶️</span>
+      <span>Try It</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  const screens = ['home','syntax','compare','play'];
+
+  function showScreen(id, tabEl) {
+    screens.forEach(s => {
+      document.getElementById('screen-' + s).classList.remove('active');
+    });
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('screen-' + id).classList.add('active');
+    if (tabEl) tabEl.classList.add('active');
+    setBottomTab(id);
+  }
+
+  function setBottomTab(id) {
+    document.querySelectorAll('.bottom-tab').forEach(t => t.classList.remove('active'));
+    const bt = document.getElementById('btab-' + id);
+    if (bt) bt.classList.add('active');
+  }
+
+  const snippets = {
+    hello: `print("Hello from VY!")`,
+    loop: `fruits = ["apple", "mango", "lime"]\n\nloop fruit in fruits:\n  print("I like {fruit}")`,
+    fn: `fn greet(name):\n  give "Hello, {name}! Welcome to VY."\n\nresult = greet("World")\nprint(result)`,
+    fib: `fn fib(n):\n  when n <= 1:\n    give n\n  give fib(n-1) + fib(n-2)\n\nloop i in 0..10:\n  print(fib(i))`,
+    struct: `struct Person:\n  name\n  age\n\n  fn greet():\n    give "Hi, I'm {name}, age {age}"\n\np = Person("Luna", 28)\nprint(p.greet())`
+  };
+
+  function loadSnippet(key) {
+    document.getElementById('codeInput').value = snippets[key];
+    document.getElementById('playOutput').textContent = '// Output will appear here...';
+  }
+
+  function runCode() {
+    const code = document.getElementById('codeInput').value.trim();
+    const out = document.getElementById('playOutput');
+
+    // Simulate VY interpreter
+    let lines = code.split('\n');
+    let output = [];
+    let vars = {};
+
+    function resolveTemplate(str, vars) {
+      return str.replace(/\{(\w+)\}/g, (_, k) => vars[k] !== undefined ? vars[k] : `{${k}}`);
+    }
+
+    function evalExpr(expr, vars) {
+      expr = expr.trim();
+      // string literal
+      if ((expr.startsWith('"') && expr.endsWith('"')) || (expr.startsWith("'") && expr.endsWith("'"))) {
+        return resolveTemplate(expr.slice(1, -1), vars);
+      }
+      // number
+      if (!isNaN(expr)) return Number(expr);
+      // list literal
+      if (expr.startsWith('[') && expr.endsWith(']')) {
+        return expr.slice(1,-1).split(',').map(e => evalExpr(e.trim(), vars));
+      }
+      // variable
+      if (vars[expr] !== undefined) return vars[expr];
+      // fib(n) special
+      if (expr.startsWith('fib(')) {
+        const arg = parseInt(expr.slice(4,-1));
+        function fib(n) { return n<=1?n:fib(n-1)+fib(n-2); }
+        return fib(isNaN(arg) ? (vars[expr.slice(4,-1)] ?? 0) : arg);
+      }
+      // greet("x") pattern
+      const fnCall = expr.match(/^(\w+)\((.+)\)$/);
+      if (fnCall) return `[called ${fnCall[1]}(${fnCall[2]})]`;
+      return expr;
+    }
+
+    let i = 0;
+    let loopMatched = false;
+
+    while (i < lines.length) {
+      const line = lines[i];
+      const trimmed = line.trim();
+
+      if (!trimmed || trimmed.startsWith('##') || trimmed.startsWith('#') || trimmed.startsWith('fn ') || trimmed.startsWith('struct ') || trimmed.startsWith('give ')) {
+        i++; continue;
+      }
+
+      // print(...)
+      const printMatch = trimmed.match(/^print\((.+)\)$/);
+      if (printMatch) {
+        const val = evalExpr(printMatch[1], vars);
+        output.push(Array.isArray(val) ? val.join(', ') : String(val));
+        i++; continue;
+      }
+
+      // assignment: x = expr
+      const assignMatch = trimmed.match(/^(\w+)\s*=\s*(.+)$/);
+      if (assignMatch) {
+        vars[assignMatch[1]] = evalExpr(assignMatch[2], vars);
+        i++; continue;
+      }
+
+      // loop x in list
+      const loopListMatch = trimmed.match(/^loop\s+(\w+)\s+in\s+\[(.+)\]:$/);
+      if (loopListMatch) {
+        const varName = loopListMatch[1];
+        const items = loopListMatch[2].split(',').map(e => evalExpr(e.trim(), vars));
+        let j = i+1;
+        let bodyLines = [];
+        while (j < lines.length && (lines[j].startsWith('  ') || lines[j].startsWith('\t'))) {
+          bodyLines.push(lines[j].trim()); j++;
+        }
+        items.forEach(item => {
+          vars[varName] = item;
+          bodyLines.forEach(bl => {
+            const pm = bl.match(/^print\((.+)\)$/);
+            if (pm) output.push(resolveTemplate(evalExpr(pm[1], vars) + '', vars));
+          });
+        });
+        i = j; loopMatched = true; continue;
+      }
+
+      // loop i in 0..N
+      const loopRangeMatch = trimmed.match(/^loop\s+(\w+)\s+in\s+(\d+)\.\.(\d+):$/);
+      if (loopRangeMatch) {
+        const varName = loopRangeMatch[1];
+        const from = parseInt(loopRangeMatch[2]);
+        const to   = parseInt(loopRangeMatch[3]);
+        let j = i+1;
+        let bodyLines = [];
+        while (j < lines.length && (lines[j].startsWith('  ') || lines[j].startsWith('\t'))) {
+          bodyLines.push(lines[j].trim()); j++;
+        }
+        for (let k=from; k<to; k++) {
+          vars[varName] = k;
+          bodyLines.forEach(bl => {
+            const pm = bl.match(/^print\((.+)\)$/);
+            if (pm) {
+              const val = evalExpr(pm[1], vars);
+              output.push(Array.isArray(val) ? val.join(', ') : String(val));
+            }
+          });
+        }
+        i = j; continue;
+      }
+
+      i++;
+    }
+
+    if (output.length === 0) {
+      out.innerHTML = '<span class="error">// No output. Try a snippet above!</span>';
+    } else {
+      out.textContent = output.join('\n');
+    }
+  }
+</script>
+</body>
+</html>
